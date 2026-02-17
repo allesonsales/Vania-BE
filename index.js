@@ -26,7 +26,11 @@ const __dirname = path.dirname(__filename);
 
 app.use(
   cors({
-    origin: ["http://localhost:4200", "http://localhost:4201"],
+    origin: [
+      "http://localhost:4200",
+      "http://localhost:4201",
+      "https://van-ia-fe-1xrf.vercel.app",
+    ],
     credentials: true,
   }),
 );
@@ -55,5 +59,5 @@ try {
   console.log("Erro ao rodar o servidor com sequelize");
 }
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.MYSQL_PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
