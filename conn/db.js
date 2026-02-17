@@ -1,15 +1,10 @@
 import { Sequelize } from "sequelize";
-import enc from "dotenv";
+import env from "dotenv";
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASS,
-  {
-    host: "localhost",
-    dialect: "mysql",
-  },
-);
+const sequelize = new Sequelize(process.env.MYSQL_PUBLIC_URL, {
+  host: process.env.DB_URL,
+  dialect: "mysql",
+});
 
 async function conectarBanco() {
   try {
