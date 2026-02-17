@@ -1,9 +1,15 @@
 import { Sequelize } from "sequelize";
+import enc from "dotenv";
 
-const sequelize = new Sequelize("vania", "root", "123456", {
-  host: "localhost",
-  dialect: "mysql",
-});
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASS,
+  {
+    host: "localhost",
+    dialect: "mysql",
+  },
+);
 
 async function conectarBanco() {
   try {
