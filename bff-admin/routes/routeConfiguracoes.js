@@ -1,13 +1,13 @@
-import express from "express";
-import autenticarUsuario from "../../domain/utils/token/autenticarUsuario.js";
-import { ConfiguracaoController } from "../controller/configuracaoController.js";
+// import express from "express";
+// import autenticarUsuario from "../../domain/utils/token/autenticarUsuario.js";
+// import { ConfiguracaoController } from "../controller/configuracaoController.js";
 
-const ConfiguracaoRoute = express.Router();
+// const ConfiguracaoRoute = express.Router();
 
-ConfiguracaoRoute.post(
-  "/",
-  autenticarUsuario,
-  ConfiguracaoController.criarConfiguracao,
-);
+// ConfiguracaoRoute.post(
+//   "/",
+//   autenticarUsuario,
+//   ConfiguracaoController.criarConfiguracao,
+// );
 
-export default ConfiguracaoRoute;
+// export default ConfiguracaoRoute;

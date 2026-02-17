@@ -11,7 +11,6 @@ import VansRoutes from "./bff-admin//routes/routeVans.js";
 import UsuariosRoute from "./bff-admin//routes/routeUsuario.js";
 import RotasRoutes from "./bff-admin//routes/routeRotas.js";
 import MotoristaRoutes from "./bff-admin//routes/routeMotorista.js";
-import ConfiguracaoRoute from "./bff-admin/routes/routeConfiguracoes.js";
 import FinanceiroRoute from "./bff-admin/routes/routeFinanceiro.js";
 import ViagensRoutes from "./bff-motorista/routes/ViagensRoutes.js";
 import AdminViagensRoute from "./bff-admin/routes/routeViagensAdmin.js";
@@ -45,7 +44,7 @@ app.use("/motoristas", MotoristaRoutes);
 app.use("/app-motorista", AppMotoristaRoutes);
 app.use("/viagens", ViagensRoutes);
 app.use("/admin-viagens", AdminViagensRoute);
-app.use("/configuracoes", ConfiguracaoRoute);
+// app.use("/configuracoes", ConfiguracaoRoute);
 
 try {
   conn.sync().then(() => {
