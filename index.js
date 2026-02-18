@@ -30,6 +30,7 @@ app.use(
       "http://localhost:4200",
       "http://localhost:4201",
       "https://van-ia-fe-1xrf.vercel.app",
+      "https://vaniafe.vercel.app/login",
     ],
     credentials: true,
   }),
