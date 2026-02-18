@@ -5,6 +5,8 @@ import cookie from "cookie-parser";
 
 export class UsuarioController {
   static async login(req, res) {
+    const isProd = process.env.NODE_ENV === "production";
+
     const { email, senha } = req.body;
 
     try {
@@ -43,8 +45,8 @@ export class UsuarioController {
 
       res.cookie("token", token, {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax",
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
         maxAge: 60 * 60 * 1000,
       });
 
@@ -60,12 +62,15 @@ export class UsuarioController {
   }
 
   static async logout(req, res) {
-    res.clearCookie("token", {
+    const isProd = process.env.NODE_ENV === "production";
+
+    res.cookie("token", token, {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      path: "/",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      maxAge: 60 * 60 * 1000,
     });
+
     return res
       .status(200)
       .json({ message: "Logout realizado com sucesso!", status: "error" });

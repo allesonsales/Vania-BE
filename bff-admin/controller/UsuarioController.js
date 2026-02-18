@@ -164,6 +164,7 @@ export class UsuarioController {
   static async buscarUsuario(req, res) {}
 
   static async login(req, res) {
+    const isProd = process.env.NODE_ENV === "production";
     try {
       const { email, senha } = req.body;
 
@@ -201,8 +202,8 @@ export class UsuarioController {
 
       res.cookie("token", token, {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax",
+        secure: isProd,
+        sameSite: isProd ? "none" : "lax",
         maxAge: 60 * 60 * 1000,
       });
 
@@ -218,11 +219,13 @@ export class UsuarioController {
   }
 
   static async logout(req, res) {
-    res.clearCookie("token", {
+    const isProd = process.env.NODE_ENV === "production";
+
+    res.cookie("token", token, {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      path: "/",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+      maxAge: 60 * 60 * 1000,
     });
 
     return res
