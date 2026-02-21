@@ -52,7 +52,7 @@ app.use("/admin-viagens", AdminViagensRoute);
 // app.use("/configuracoes", ConfiguracaoRoute);
 
 try {
-  conn.sync({ force: true }).then(() => {
+  conn.sync().then(() => {
     console.log("Servidor rodando com sequelize");
     console.log("Pasta contratos:", path.join(__dirname, "contratos"));
   });
