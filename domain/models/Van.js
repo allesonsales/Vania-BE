@@ -13,7 +13,7 @@ const Van = db.define("Van", {
   },
   renavam: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   placa: {
     type: DataTypes.STRING,

@@ -5,12 +5,13 @@ import Motorista from "../../models/Motorista.js";
 import Rota from "../../models/Rota.js";
 import Van from "../../models/Van.js";
 
-async function consultarRota(rotaId, usuarioId) {
+async function consultarRota(rotaId) {
+  console.log("chamou esse");
   try {
     const rota = await Rota.findOne({
-      where: { id: rotaId, usuario_id: usuarioId },
+      where: { id: rotaId },
       include: [
-        { model: Escola, as: "escola" },
+        { model: Escola, as: "escolas" },
         {
           model: Van,
           as: "van",
@@ -28,13 +29,12 @@ async function consultarRota(rotaId, usuarioId) {
       hora_fim_ida: rota.hora_fim_ida,
       hora_inicio_volta: rota.hora_inicio_volta,
       hora_fim_volta: rota.hora_fim_volta,
-      escola: {
-        id: rota.escola.id,
-        nome: rota.escola.nome,
-        telefone: rota.escola.telefone,
-        status: rota.escola.status,
-        tipo: rota.escola.tipo,
-      },
+      escolas: rota.escolas.map((escola) => ({
+        id: escola.id,
+        nome: escola.nome,
+        telefone: escola.telefone,
+        tipo: escola.tipo,
+      })),
       motorista: {
         id: rota.motorista.id,
         nome: rota.motorista.nome,
@@ -66,7 +66,7 @@ async function consultarRota(rotaId, usuarioId) {
 
     if (!rota) return null;
 
-    return rota;
+    return rotaFlat;
   } catch (error) {
     throw error;
   }

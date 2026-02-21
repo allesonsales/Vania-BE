@@ -17,7 +17,7 @@ export class VanController {
       const { numero, renavam, placa, lugares, marcaId, modelo, ano } =
         req.body;
 
-      const camposObrigatorios = { numero, renavam, placa, marcaId, modelo };
+      const camposObrigatorios = { numero, placa, marcaId, modelo };
 
       const van = {
         numero: numero,
@@ -178,7 +178,9 @@ export class VanController {
       if (!vanEncontrada) {
         console.log("Van não encontrada!");
 
-        return res.status(400).json({ message: "Van não encontrada!" });
+        return res
+          .status(400)
+          .json({ message: "Van não encontrada!", status: "error" });
       }
 
       const vanEmRotaAtiva = await Rota.findOne({

@@ -1,4 +1,4 @@
-import { Op } from "sequelize";
+import { Model, Op } from "sequelize";
 import Escola from "../../domain/models/Escola.js";
 import buscarEscola from "../../domain/utils/escolas/buscarEscola.js";
 import verificarEndereco from "../../domain/utils/enderecos/verificarEndereco.js";
@@ -9,6 +9,7 @@ import consultarNumerosDeAlunosPorEscola from "../../domain/utils/escolas/consul
 import Rota from "../../domain/models/Rota.js";
 import sequelize from "../../conn/db.js";
 import consultarNumeroDeRotasAtivasPorEscola from "../../domain/utils/escolas/consultarNumeroRotasAtivas.js";
+import RotaEscola from "../../domain/models/relacoes/RotaEscola.js";
 
 export class EscolaController {
   static async listarEscolas(req, res) {
@@ -52,7 +53,6 @@ export class EscolaController {
 
       const camposObrigatorios = {
         nome,
-        telefone,
         cep,
         rua,
         numero,
@@ -205,13 +205,11 @@ export class EscolaController {
   }
 
   static async deletarEscola(req, res) {
-    const transaction = await sequelize.transaction();
     try {
       const escolaId = req.params.id;
 
       const escola = await Escola.findOne({
         where: { id: escolaId },
-        transaction,
       });
 
       if (!escola) {
@@ -220,9 +218,9 @@ export class EscolaController {
           .json({ message: "Escola não encontrada!", status: "error" });
       }
 
-      const rotasDaEscolaAtiva = await Rota.findOne({
-        where: { escola_id: escolaId, status: 1 },
-        transaction,
+      const rotasDaEscolaAtiva = await RotaEscola.findOne({
+        where: { escola_id: escolaId },
+        include: [{ model: Rota, as: "rota", where: { status: 1 } }],
       });
 
       if (rotasDaEscolaAtiva) {
@@ -230,19 +228,6 @@ export class EscolaController {
           message:
             "Não foi possível excluir a escola. Existem rotas ativas associadas a ela.",
           status: "error",
-        });
-      }
-
-      const rotasDaEscolaInativa = await Rota.findOne({
-        where: { escola_id: escolaId, status: 0 },
-        transaction,
-      });
-
-      if (rotasDaEscolaInativa) {
-        await escola.update({ status: 0 });
-        return res.status(200).json({
-          message: "Escola desativada com sucesso.",
-          status: "success",
         });
       }
 

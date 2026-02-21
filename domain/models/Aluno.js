@@ -16,6 +16,10 @@ const Aluno = db.define("Aluno", {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  escola_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
   status: { type: DataTypes.INTEGER, allowNull: false },
 });
 

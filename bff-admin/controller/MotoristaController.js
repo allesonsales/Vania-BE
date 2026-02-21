@@ -25,11 +25,15 @@ export class MotoristaController {
         email,
       } = req.body;
 
+      const dataValidadeCnhF = req.body.dataValidadeCnh
+        ? new Date(req.body.dataValidadeCnh)
+        : null;
+
       const dadosMotorista = {
         nome: nome,
         data_nascimento: dataNascimento,
         cnh: cnh,
-        data_validade_cnh: dataValidadeCnh,
+        data_validade_cnh: dataValidadeCnhF,
         tipo_sanguineo: tipoSanguineo,
         telefone: telefone,
         usuario_id: usuarioId,
@@ -242,7 +246,6 @@ export class MotoristaController {
         usuarioEncontrado &&
         usuarioEncontrado.id !== motoristaEncontrado.usuario_motorista_id
       ) {
-        console.log("Entramos aqui");
         if (usuarioEncontrado.cpf === cpf) {
           return res
             .status(409)
@@ -295,7 +298,9 @@ export class MotoristaController {
       );
 
       if (!motoristaEncontrado) {
-        return res.status(500).json({ message: "Motorista nao encontrado!" });
+        return res
+          .status(500)
+          .json({ message: "Motorista nao encontrado!", status: "error" });
       }
 
       const motoristaEmRotaAtiva = await Rota.findOne({
@@ -321,6 +326,10 @@ export class MotoristaController {
       });
 
       if (motoristaEmRotaInativa) {
+        await Usuario.update(
+          { status: 0 },
+          { where: { id: motoristaEncontrado.usuario_motorista_id } },
+        );
         await motoristaEncontrado.update({ status: 0 });
         return res.status(200).json({
           message: "Motorista desativado com sucesso.",
@@ -330,6 +339,9 @@ export class MotoristaController {
 
       await motoristaEncontrado.destroy();
 
+      await Usuario.destroy({
+        where: { id: motoristaEncontrado.usuario_motorista_id },
+      });
       return res.status(200).json({
         message: "Motorista excluído com sucesso!",
         status: "success",

@@ -13,7 +13,6 @@ const Rota = db.define("rota", {
   partida_id: { type: DataTypes.INTEGER, allowNull: false },
   van_id: { type: DataTypes.INTEGER, allowNull: false },
   motorista_id: { type: DataTypes.INTEGER, allowNull: false },
-  escola_id: { type: DataTypes.INTEGER, allowNull: false },
   hora_inicio_ida: { type: DataTypes.TIME, allowNull: false },
   hora_fim_ida: { type: DataTypes.TIME, allowNull: false },
   hora_inicio_volta: { type: DataTypes.TIME, allowNull: false },

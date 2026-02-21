@@ -22,6 +22,9 @@ import Pagamento from "../../domain/models/Pagamento.js";
 import criarContrato from "../../domain/utils/contrato/criarContrato.js";
 import calcularPrevisaoFim from "../../domain/utils/contrato/calcularPrevisaoFim.js";
 import buscarUsuarioPorId from "../../domain/utils/usuarios/buscarUsuarioPorId.js";
+import RotaEscola from "../../domain/models/relacoes/RotaEscola.js";
+import Viagem from "../../domain/models/Viagem.js";
+import Presenca from "../../domain/models/Presenca.js";
 
 export class AlunoController {
   static async cadastrarAluno(req, res) {
@@ -38,6 +41,8 @@ export class AlunoController {
       dataNascimentoResponsavel,
       telefoneResponsavel,
       emailResponsavel,
+      escolaNome,
+      escolaId,
       rotaId,
       cep,
       rua,
@@ -132,6 +137,7 @@ export class AlunoController {
         rg: rg,
         tipo_sanguineo: tipoSanguineo,
         endereco_id: enderecoBuscado.id,
+        escola_id: escolaId,
         status: 1,
       };
 
@@ -174,7 +180,7 @@ export class AlunoController {
         include: [
           {
             model: Escola,
-            as: "escola",
+            as: "escolas",
             include: [{ model: Endereco, as: "endereco" }],
           },
         ],
@@ -204,7 +210,7 @@ export class AlunoController {
           id: alunoCriado.id,
           nome: alunoCriado.nome,
           escola: {
-            nome: rota.escola.nome,
+            nome: escolaNome,
           },
         },
         endereco: {
@@ -269,6 +275,10 @@ export class AlunoController {
             where: { status: { [Op.ne]: 0 } },
             include: [
               {
+                model: Escola,
+                as: "escola",
+              },
+              {
                 model: Endereco,
                 as: "endereco",
                 attributes: ["rua", "numero", "bairro", "cidade"],
@@ -293,12 +303,6 @@ export class AlunoController {
                     as: "rota",
                     attributes: ["nome", "id"],
                     include: [
-                      {
-                        model: Escola,
-                        as: "escola",
-                        attributes: ["id", "nome", "telefone"],
-                        include: [{ model: Endereco, as: "endereco" }],
-                      },
                       {
                         model: Van,
                         as: "van",
@@ -327,9 +331,9 @@ export class AlunoController {
             nome: aluno.aluno.rotasAluno[0]?.rota.nome,
           },
           escola: {
-            id: aluno.aluno.rotasAluno[0]?.rota.escola.id,
-            nome: aluno.aluno.rotasAluno[0]?.rota.escola.nome,
-            telefone: aluno.aluno.rotasAluno[0]?.rota.escola.telefone,
+            id: aluno.aluno.escola.id,
+            nome: aluno.aluno.escola.nome,
+            telefone: aluno.aluno.escola.telefone,
           },
           van: {
             id: aluno.aluno.rotasAluno[0]?.rota.van.id,
@@ -387,6 +391,7 @@ export class AlunoController {
       cep,
       rua,
       numero,
+      escolaId,
       bairro,
       cidade,
       estado,
@@ -398,6 +403,11 @@ export class AlunoController {
       emailResponsavel,
       status,
     } = req.body;
+
+    const rotaEscolaRegistro = {
+      rota_id: rotaId,
+      escola_id: escolaId,
+    };
 
     const rotaAlunoRegistro = {
       rota_id: rotaId,
@@ -429,6 +439,7 @@ export class AlunoController {
       tipo_sanguineo: tipoSanguineo,
       endereco_id: null,
       status: status,
+      escola_id: escolaId,
     };
 
     try {
@@ -471,7 +482,6 @@ export class AlunoController {
       }
 
       await alunoEncontrado.update(aluno);
-
       await RotaAluno.update(rotaAlunoRegistro, { where: { aluno_id: id } });
       await Usuario.update(responsavelRegistro, {
         where: { id: responsavelId },
@@ -498,12 +508,6 @@ export class AlunoController {
         where: { usuario_id: usuarioId, aluno_id: id },
       });
 
-      if (!alunoEncontrado) {
-        return res
-          .status(404)
-          .json({ message: "Aluno não encontrado", status: "error" });
-      }
-
       const aluno = await Aluno.findOne({
         where: { id: id },
       });
@@ -511,6 +515,32 @@ export class AlunoController {
       const responsavelAluno = await AlunoResponsavel.findOne({
         where: { aluno_id: aluno.id },
       });
+
+      const presencaEmViagem = await Presenca.findOne({
+        where: { aluno_id: id },
+      });
+
+      const pagamentoProcessado = await Pagamento.findOne({
+        where: { responsavel_id: responsavelAluno.usuario_id, status: 2 },
+      });
+
+      if (!presencaEmViagem && !pagamentoProcessado) {
+        await alunoEncontrado.destroy();
+        await aluno.destroy();
+        await responsavelAluno.destroy();
+        await Pagamento.destroy({
+          where: { responsavel_id: responsavelAluno.usuario_id, status: 2 },
+        });
+        await Contrato.destroy({
+          where: { responsavel_id: responsavelAluno.usuario_id },
+        });
+      }
+
+      if (!alunoEncontrado) {
+        return res
+          .status(404)
+          .json({ message: "Aluno não encontrado", status: "error" });
+      }
 
       console.log("responsavel", responsavelAluno);
       if (!responsavelAluno) {

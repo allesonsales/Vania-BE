@@ -1,8 +1,13 @@
 import { Sequelize } from "sequelize";
-import env from "dotenv";
+import dotenv from "dotenv";
+dotenv.config();
 
-const sequelize = new Sequelize(process.env.MYSQL_PUBLIC_URL, {
-  host: process.env.DB_URL,
+const DB_URL =
+  process.env.NODE_ENV === "production"
+    ? process.env.MYSQL_PUBLIC_URL
+    : process.env.LC_PUBLIC_URL;
+
+const sequelize = new Sequelize(DB_URL, {
   dialect: "mysql",
 });
 

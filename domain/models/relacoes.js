@@ -20,6 +20,7 @@ import PagamentoTipoEnum from "./enums/Pagamento_tipo_enum.js";
 import AlunoResponsavel from "./relacoes/AlunoResponsavel.js";
 import Contrato from "./Contrato.js";
 import RotaAluno from "./relacoes/RotaAluno.js";
+import RotaEscola from "./relacoes/RotaEscola.js";
 
 AlunoUsuario.belongsTo(Aluno, {
   foreignKey: "aluno_id",
@@ -40,17 +41,26 @@ AlunoResponsavel.belongsTo(Usuario, {
 Usuario.hasMany(AlunoResponsavel, {
   foreignKey: "usuario_id",
   as: "Alunoresponsavel",
+  onDelete: "CASCADE",
 });
 
-VanUsuario.belongsTo(Van, { foreignKey: "van_id", as: "van" });
+VanUsuario.belongsTo(Van, {
+  foreignKey: "van_id",
+  as: "van",
+  onDelete: "CASCADE",
+});
 VanUsuario.belongsTo(Usuario, { foreignKey: "usuario_id" });
 
 Aluno.hasOne(AlunoResponsavel, { foreignKey: "aluno_id", as: "responsavel" });
-Aluno.hasMany(AlunoUsuario, { foreignKey: "aluno_id", as: "usuarios" });
+Aluno.hasMany(AlunoUsuario, {
+  foreignKey: "aluno_id",
+  as: "usuarios",
+  onDelete: "CASCADE",
+});
 Usuario.hasMany(AlunoUsuario, { foreignKey: "usuario_id" });
 
 Van.hasMany(VanUsuario, { foreignKey: "van_id" });
-Usuario.hasMany(VanUsuario, { foreignKey: "usuario_id" });
+Usuario.hasMany(VanUsuario, { foreignKey: "usuario_id", onDelete: "CASCADE" });
 
 Usuario.belongsTo(UsuarioEnum, {
   foreignKey: "tipo",
@@ -58,6 +68,15 @@ Usuario.belongsTo(UsuarioEnum, {
 });
 UsuarioEnum.hasMany(Usuario, {
   foreignKey: "tipo",
+});
+
+Aluno.belongsTo(Escola, {
+  foreignKey: "escola_id",
+  as: "escola",
+});
+
+Escola.hasMany(Aluno, {
+  foreignKey: "escola_id",
 });
 
 Aluno.belongsTo(Endereco, {
@@ -82,6 +101,7 @@ Motorista.belongsTo(Usuario, {
 });
 Usuario.hasOne(Motorista, {
   foreignKey: "usuario_id",
+  onDelete: "CASCADE",
 });
 
 Motorista.belongsTo(Usuario, {
@@ -92,17 +112,29 @@ Usuario.hasOne(Motorista, {
   foreignKey: "usuario_motorista_id",
 });
 
-Rota.belongsTo(Escola, {
-  foreignKey: "escola_id",
-  as: "escola",
+Rota.belongsToMany(Escola, {
+  through: RotaEscola,
+  foreignKey: "rota_id",
+  otherKey: "escola_id",
+  as: "escolas",
 });
-Escola.hasMany(Rota, {
+
+Escola.belongsToMany(Rota, {
+  through: RotaEscola,
   foreignKey: "escola_id",
+  otherKey: "rota_id",
+  as: "rotas",
+});
+
+RotaEscola.belongsTo(Rota, {
+  foreignKey: "rota_id",
+  as: "rota",
 });
 
 Rota.belongsTo(Endereco, {
   foreignKey: "partida_id",
 });
+
 Endereco.hasMany(Rota, {
   foreignKey: "partida_id",
 });
@@ -121,6 +153,7 @@ Rota.belongsTo(Motorista, {
 });
 Motorista.hasMany(Rota, {
   foreignKey: "motorista_id",
+  onDelete: "CASCADE",
 });
 
 Rota.belongsTo(Usuario, {
@@ -129,6 +162,7 @@ Rota.belongsTo(Usuario, {
 
 Usuario.hasMany(Rota, {
   foreignKey: "usuario_id",
+  onDelete: "CASCADE",
 });
 
 Contrato.belongsTo(Usuario, {
@@ -137,20 +171,30 @@ Contrato.belongsTo(Usuario, {
 
 Usuario.hasOne(Contrato, {
   foreignKey: "usuario_id",
+  onDelete: "CASCADE",
 });
 
 Contrato.belongsTo(Usuario, {
   foreignKey: "responsavel_id",
 });
 
-RotaAluno.belongsTo(Rota, { foreignKey: "rota_id", as: "rota" });
-Rota.hasMany(RotaAluno, { foreignKey: "rota_id" });
+RotaAluno.belongsTo(Rota, {
+  foreignKey: "rota_id",
+  as: "rota",
+  onDelete: "CASCADE",
+});
+Rota.hasMany(RotaAluno, { foreignKey: "rota_id", onDelete: "CASCADE" });
 
 RotaAluno.belongsTo(Aluno, { foreignKey: "aluno_id", as: "aluno" });
-Aluno.hasMany(RotaAluno, { foreignKey: "aluno_id", as: "rotasAluno" });
+Aluno.hasMany(RotaAluno, {
+  foreignKey: "aluno_id",
+  as: "rotasAluno",
+  onDelete: "CASCADE",
+});
 
 Usuario.hasOne(Contrato, {
   foreignKey: "responsavel_id",
+  onDelete: "CASCADE",
 });
 
 Rota.belongsTo(Van, {
@@ -159,6 +203,7 @@ Rota.belongsTo(Van, {
 });
 Van.hasMany(Rota, {
   foreignKey: "van_id",
+  onDelete: "CASCADE",
 });
 
 Escola.belongsTo(Usuario, {
@@ -180,8 +225,10 @@ Presenca.belongsTo(Aluno, {
   foreignKey: "aluno_id",
   as: "aluno",
 });
+
 Aluno.hasMany(Presenca, {
   foreignKey: "aluno_id",
+  onDelete: "Cascade",
 });
 
 Presenca.belongsTo(Viagem, {
@@ -230,6 +277,7 @@ Viagem.belongsTo(Usuario, {
 
 Usuario.hasMany(Viagem, {
   foreignKey: "usuario_id",
+  onDelete: "CASCADE",
 });
 
 Pagamento.belongsTo(PagamentoStatusEnum, {
@@ -256,6 +304,7 @@ Viagem.belongsTo(Rota, {
 Rota.hasMany(Viagem, {
   foreignKey: "rota_id",
   as: "viagens",
+  onDelete: "CASCADE",
 });
 
 Pagamento.belongsTo(Usuario, {
@@ -271,6 +320,7 @@ Pagamento.belongsTo(Usuario, {
 Usuario.hasMany(Pagamento, {
   foreignKey: "usuario_id",
   as: "pagamentosCriados",
+  onDelete: "CASCADE",
 });
 
 Usuario.hasMany(Pagamento, {

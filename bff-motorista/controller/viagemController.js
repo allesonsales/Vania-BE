@@ -7,6 +7,7 @@ import Viagem from "../../domain/models/Viagem.js";
 import RotaAluno from "../../domain/models/relacoes/RotaAluno.js";
 import Aluno from "../../domain/models/Aluno.js";
 import Presenca from "../../domain/models/Presenca.js";
+import RotaEscola from "../../domain/models/relacoes/RotaEscola.js";
 
 export class viagemController {
   static async verificarViagemAtiva(req, res) {
@@ -87,44 +88,75 @@ export class viagemController {
     try {
       const rotaId = req.params.id;
 
-      const rota = await Rota.findOne({
-        where: { id: rotaId },
-        include: [
-          {
-            model: Escola,
-            as: "escola",
-          },
-        ],
-      });
-
-      if (!rota) {
-        return res.status(400).json({ message: "Erro ao consultar rota!" });
-      }
+      console.log("rota id", rotaId);
 
       const alunos = await RotaAluno.findAll({
-        where: { rota_id: rota.id },
+        where: { rota_id: rotaId },
         include: [
           {
             model: Aluno,
             as: "aluno",
+            include: [{ model: Escola, as: "escola" }],
+          },
+          {
+            model: Rota,
+            as: "rota",
           },
         ],
       });
 
-      const viagemFlat = {
-        rota_id: rota.id,
-        nome_rota: rota.nome,
-        hora_inicio_ida: rota.hora_inicio_ida,
-        hora_fim_ida: rota.hora_fim_ida,
-        hora_fim_volta: rota.hora_fim_volta,
-        hora_inicio_volta: rota.hora_inicio_volta,
-        alunos: alunos.map((aluno) => ({
-          id: aluno.aluno.id,
-          nome: aluno.aluno.nome,
-          presenca: null,
-        })),
-      };
+      const escolas = alunos.reduce((acc, { aluno }) => {
+        const escolaId = aluno.escola.id;
+        const escolaExistente = acc.find((e) => e.id === escolaId);
 
+        if (escolaExistente) {
+          escolaExistente.alunos.push({ id: aluno.id, nome: aluno.nome });
+        } else {
+          acc.push({
+            id: aluno.escola.id,
+            nome: aluno.escola.nome,
+            alunos: [{ id: aluno.id, nome: aluno.nome }],
+          });
+        }
+
+        return acc;
+      }, []);
+
+      // const viagemFlat = {
+      //   rota_id: alunos[0].rota.id,
+      //   nome_rota: alunos[0].rota.nome,
+      //   hora_inicio_ida: alunos[0].rota.hora_inicio_ida,
+      //   hora_fim_ida: alunos[0].rota.hora_fim_ida,
+      //   hora_fim_volta: alunos[0].rota.hora_fim_volta,
+      //   hora_inicio_volta: rota.hora_inicio_volta,
+      //   escolas: alunos.map((aluno) => ({
+      //     id: aluno.escola.id,
+      //   })),
+      // };
+
+      const rotaInfo = alunos[0].rota;
+
+      // const viagemFlat = {
+      //   rota_id: rotaInfo.id,
+      //   nome_rota: rotaInfo.nome,
+      //   hora_inicio_ida: rotaInfo.hora_inicio_ida,
+      //   hora_fim_ida: rotaInfo.hora_fim_ida,
+      //   hora_inicio_volta: rotaInfo.hora_inicio_volta,
+      //   hora_fim_volta: rotaInfo.hora_fim_volta,
+      //   escolas: alunos.map((aluno) => ({
+      //     id: aluno.aluno.escola.id,
+      //   })),
+      // };
+
+      const viagemFlat = {
+        rota_id: rotaInfo.id,
+        nome_rota: rotaInfo.nome,
+        hora_inicio_ida: rotaInfo.hora_inicio_ida,
+        hora_fim_ida: rotaInfo.hora_fim_ida,
+        hora_inicio_volta: rotaInfo.hora_inicio_volta,
+        hora_fim_volta: rotaInfo.hora_fim_volta,
+        escolas: escolas,
+      };
       return res.status(200).json(viagemFlat);
     } catch (err) {
       console.error(err);
@@ -135,6 +167,10 @@ export class viagemController {
   static async iniciarViagem(req, res) {
     try {
       const usuarioId = req.usuario.id;
+
+      const motoristaEncontrado = await Motorista.findOne({
+        where: { usuario_motorista_id: usuarioId },
+      });
       const rotaId = req.params.id;
       const horaAtual = new Date().toTimeString().slice(0, 8);
 
@@ -163,7 +199,7 @@ export class viagemController {
       rota.update({ status: 2 });
 
       const viagem = await Viagem.create({
-        usuario_id: usuarioId,
+        usuario_id: motoristaEncontrado.usuario_id,
         rota_id: rotaId,
         tipo: horaAtual < rota.hora_fim_ida ? 1 : 2,
         status: 1,

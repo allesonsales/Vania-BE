@@ -10,23 +10,6 @@ import Rota from "../../domain/models/Rota.js";
 import sequelize from "../../conn/db.js";
 
 export class PagamentoController {
-  static async criarPagamentos(req, res) {
-    const usuarioId = req.usuario.id;
-
-    let configuracao;
-    try {
-      configuracao = await consultarConfiguracao;
-
-      if (!configuracao) {
-        return res
-          .status(400)
-          .json({ message: "Configuração de usuário, não encontrada!" });
-      }
-    } catch (error) {
-      return res.status(500).json({ message: "Erro ao buscar configurações" });
-    }
-  }
-
   static async buscarTodosPagamentos(req, res) {
     try {
       const usuarioId = req.usuario.id;
@@ -60,6 +43,7 @@ export class PagamentoController {
                     model: Aluno,
                     as: "aluno",
                     include: [
+                      { model: Escola, as: "escola" },
                       {
                         model: RotaAluno,
                         as: "rotasAluno",
@@ -67,7 +51,6 @@ export class PagamentoController {
                           {
                             model: Rota,
                             as: "rota",
-                            include: [{ model: Escola, as: "escola" }],
                           },
                         ],
                       },
@@ -141,13 +124,12 @@ export class PagamentoController {
           id: pagamento.responsavel?.Alunoresponsavel?.[0]?.aluno.id,
           nome: pagamento.responsavel?.Alunoresponsavel?.[0]?.aluno.nome,
           escola: {
-            nome: pagamento.responsavel?.Alunoresponsavel?.[0]?.aluno
-              .rotasAluno?.[0].rota.escola.nome,
-            id: pagamento.responsavel?.Alunoresponsavel?.[0]?.aluno
-              .rotasAluno?.[0].rota.escola.id,
+            nome: pagamento.responsavel?.Alunoresponsavel?.[0]?.aluno.escola
+              .nome,
+            id: pagamento.responsavel?.Alunoresponsavel?.[0]?.aluno.escola.id,
             telefone:
-              pagamento.responsavel?.Alunoresponsavel?.[0]?.aluno
-                .rotasAluno?.[0].rota.escola.telefone,
+              pagamento.responsavel?.Alunoresponsavel?.[0]?.aluno.escola
+                .telefone,
           },
         },
         responsavel: {
@@ -192,6 +174,7 @@ export class PagamentoController {
                     model: Aluno,
                     as: "aluno",
                     include: [
+                      { model: Escola, as: "escola" },
                       {
                         model: RotaAluno,
                         as: "rotasAluno",
@@ -199,7 +182,6 @@ export class PagamentoController {
                           {
                             model: Rota,
                             as: "rota",
-                            include: [{ model: Escola, as: "escola" }],
                           },
                         ],
                       },
@@ -233,13 +215,10 @@ export class PagamentoController {
             pagamento.responsavel.Alunoresponsavel[0].aluno.data_nascimento,
           rg: pagamento.responsavel.Alunoresponsavel[0].aluno.rg,
           escola: {
-            id: pagamento.responsavel.Alunoresponsavel[0].aluno.rotasAluno[0]
-              .rota.escola.id,
-            nome: pagamento.responsavel.Alunoresponsavel[0].aluno.rotasAluno[0]
-              .rota.escola.nome,
+            id: pagamento.responsavel.Alunoresponsavel[0].aluno.escola.id,
+            nome: pagamento.responsavel.Alunoresponsavel[0].aluno.escola.nome,
             telefone:
-              pagamento.responsavel.Alunoresponsavel[0].aluno.rotasAluno[0].rota
-                .escola.telefone,
+              pagamento.responsavel.Alunoresponsavel[0].aluno.escola.telefone,
           },
         },
         responsavel: {

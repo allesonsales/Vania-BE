@@ -1,4 +1,4 @@
-import { Op, where } from "sequelize";
+import { Op } from "sequelize";
 import Rota from "../../domain/models/Rota.js";
 import consultarRotas from "../../domain/utils/rotas/consultarRotas.js";
 import verificarCampos from "../../domain/utils/verificarCampos.js";
@@ -9,15 +9,22 @@ import verificarConflitoHorarioMotorista from "../../domain/utils/rotas/verifica
 import verificarHorario from "../../domain/utils/rotas/verificarHorario.js";
 import RotaAluno from "../../domain/models/relacoes/RotaAluno.js";
 import Motorista from "../../domain/models/Motorista.js";
+import RotaEscola from "../../domain/models/relacoes/RotaEscola.js";
+import sequelize from "../../conn/db.js";
+import consultarRotasEscolas from "../../domain/utils/rotas/consultarRotas2.js";
+import Viagem from "../../domain/models/Viagem.js";
 
 export class RotaController {
   static async cadastrarRota(req, res) {
+    const transaction = await sequelize.transaction();
+
     try {
       const usuarioId = req.usuario.id;
+
       const {
         vanId,
         motoristaId,
-        escolaId,
+        escolas,
         cep,
         rua,
         numero,
@@ -30,10 +37,11 @@ export class RotaController {
         horaFimVolta,
       } = req.body;
 
+      console.log(escolas);
+
       const camposObrigatorios = {
         vanId,
         motoristaId,
-        escolaId,
         horaInicioIda,
         horaInicioVolta,
         horaFimIda,
@@ -45,6 +53,13 @@ export class RotaController {
         cidade,
         estado,
       };
+
+      if (!escolas || escolas.length == 0) {
+        return res.status(400).json({
+          message: "A rota precisa ter pelo menos uma escola!",
+          status: "error",
+        });
+      }
 
       const motorista = await Motorista.findOne({
         where: { usuario_motorista_id: motoristaId },
@@ -87,19 +102,19 @@ export class RotaController {
       };
 
       let enderecoBuscado;
+
       try {
         enderecoBuscado = await verificarEndereco(endereco);
       } catch (error) {
         console.error(error);
-        return res.status(400).json({ message: "Erro ao verificar endereço!" });
+        return res
+          .status(400)
+          .json({ message: "Erro ao verificar endereço!", status: "error" });
       }
 
-      let escola = await buscarEscola(escolaId);
-
       const dadosRota = {
-        nome: `${enderecoBuscado.bairro} - ${escola.nome}`,
+        nome: `${enderecoBuscado.bairro} -> ${escolas.map((escola) => escola.nome).join(", ")}`,
         van_id: vanId,
-        escola_id: escolaId,
         partida_id: enderecoBuscado.id,
         motorista_id: motorista.id,
         hora_inicio_ida: horaInicioIda,
@@ -115,9 +130,13 @@ export class RotaController {
       const rotaDuplicada = await Rota.findOne({
         where: {
           van_id: vanId,
-          escola_id: escolaId,
           motorista_id: motorista.id,
           partida_id: enderecoBuscado.id,
+          hora_inicio_ida: horaInicioIda,
+          hora_fim_ida: horaFimIda,
+          hora_inicio_volta: horaInicioVolta,
+          hora_fim_volta: horaFimVolta,
+          status: { [Op.eq]: 1 },
         },
       });
 
@@ -173,13 +192,28 @@ export class RotaController {
         });
       }
 
-      await Rota.create(dadosRota);
+      const rota = await Rota.create(dadosRota, { transaction });
 
-      console.log("Rota cadastrada!");
+      function formatarTempo(tempo) {
+        return tempo.length === 5 ? tempo + ":00" : tempo;
+      }
+
+      await RotaEscola.bulkCreate(
+        escolas.map((escola) => ({
+          rota_id: Number(rota.id),
+          escola_id: escola.id,
+          horario_previsto: formatarTempo(escola.horaPrevisao),
+        })),
+        { transaction },
+      );
+
+      transaction.commit();
+
       return res
         .status(201)
         .json({ message: "Rota cadastrada com sucesso!", status: "success" });
     } catch (error) {
+      transaction.rollback();
       console.error(error);
       return res
         .status(400)
@@ -192,8 +226,14 @@ export class RotaController {
       const usuarioId = req.usuario.id;
       let rotas;
 
+      // try {
+      //   rotas = await consultarRotas(usuarioId);
+      // } catch (error) {
+      //   console.error(error);
+      // }
+
       try {
-        rotas = await consultarRotas(usuarioId);
+        rotas = await consultarRotasEscolas(usuarioId);
       } catch (error) {
         console.error(error);
       }
@@ -213,13 +253,17 @@ export class RotaController {
       const rota = await consultarRota(rotaId, usuarioId);
 
       if (rota === null) {
-        return res.status(200).json({ message: "Rota não encontrada" });
+        return res
+          .status(200)
+          .json({ message: "Rota não encontrada", status: "error" });
       }
 
       return res.status(200).json(rota);
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: "Erro ao buscar rota!" });
+      return res
+        .status(500)
+        .json({ message: "Erro ao buscar rota!", status: "error" });
     }
   }
 
@@ -363,12 +407,23 @@ export class RotaController {
       const { rotaId } = req.params;
       const usuarioId = req.usuario.id;
 
-      const rota = await consultarRota(rotaId, usuarioId);
+      const rota = await Rota.findOne({ where: { id: rotaId } });
 
       if (!rota) {
         return res
           .status(200)
           .json({ message: "Rota não encontrada", status: "error" });
+      }
+
+      const rotaComViagem = await Viagem.findOne({
+        where: { rota_id: rota.id },
+      });
+
+      if (!rotaComViagem) {
+        await rota.destroy();
+        return res
+          .status(200)
+          .json({ message: "Rota excluída com sucesso!", status: "success" });
       }
 
       await rota.update({
@@ -384,7 +439,7 @@ export class RotaController {
       console.error(error);
       return res
         .status(500)
-        .json({ message: "Erro ao buscar rota!", status: "error" });
+        .json({ message: "Erro ao excluir rota!", status: "error" });
     }
   }
 
@@ -392,33 +447,38 @@ export class RotaController {
     try {
       const { turno, escolaId } = req.body;
 
-      let where = {
-        escola_id: escolaId,
-        status: 1,
-      };
-
-      if (escolaId) {
-        where.escola_id = escolaId;
-      }
+      const whereClause = {};
 
       if (turno == "Manhã") {
-        where.hora_inicio_ida = { [Op.lt]: "12:00" };
+        whereClause.hora_inicio_ida = { [Op.lt]: "12:00" };
       } else if (turno == "Tarde") {
-        where.hora_inicio_ida = {
+        whereClause.hora_inicio_ida = {
           [Op.gte]: "12:00",
           [Op.lt]: "18:00",
         };
       } else {
-        where.hora_inicio_ida = { [Op.gte]: "18:00" };
+        whereClause.hora_inicio_ida = { [Op.gte]: "18:00" };
       }
 
-      const rotas = await Rota.findAll({ where });
+      const rotas = await RotaEscola.findAll({
+        where: { escola_id: escolaId },
+        include: [{ model: Rota, as: "rota", where: whereClause }],
+      });
 
       if (rotas.length === 0) {
         return res.status(200).json([]);
       }
 
-      return res.status(200).json(rotas);
+      const rotasFlat = rotas.map((rota) => ({
+        id: rota.rota.id,
+        nome: rota.rota.nome,
+        hora_inicio_ida: rota.rota.hora_inicio_ida,
+        hora_inicio_volta: rota.rota.hora_inicio_volta,
+        hora_fim_volta: rota.rota.hora_fim_volta,
+        hora_fim_ida: rota.rota.hora_fim_ida,
+      }));
+
+      return res.status(200).json(rotasFlat);
     } catch (error) {
       console.error(error);
       return res

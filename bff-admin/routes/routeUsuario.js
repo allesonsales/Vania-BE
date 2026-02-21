@@ -14,7 +14,7 @@ UsuariosRoute.put(
   UsuarioController.cadastrarSenhaPrimeiroAcesso,
 );
 UsuariosRoute.post("/login", UsuarioController.login);
-UsuariosRoute.get("/logout", UsuarioController.logout);
+UsuariosRoute.post("/logout", UsuarioController.logout);
 UsuariosRoute.post("/", UsuarioController.cadastrarUsuario);
 UsuariosRoute.delete("/", autenticarUsuario, UsuarioController.excluirUsuario);
 UsuariosRoute.get("/validar", autenticarUsuario, (req, res) => {

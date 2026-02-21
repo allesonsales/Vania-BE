@@ -1,11 +1,10 @@
+import RotaEscola from "../../models/relacoes/RotaEscola.js";
 import Rota from "../../models/Rota.js";
 
 async function consultarNumeroDeRotasAtivasPorEscola(escolaId) {
-  const rotasPorescola = await Rota.count({
-    where: { escola_id: escolaId },
-  });
+  const rotas = await RotaEscola.count({ where: { escola_id: escolaId } });
 
-  return rotasPorescola;
+  return rotas;
 }
 
 export default consultarNumeroDeRotasAtivasPorEscola;

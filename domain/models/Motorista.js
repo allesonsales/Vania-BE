@@ -12,8 +12,8 @@ const Motorista = db.define("motorista", {
   usuario_motorista_id: { type: DataTypes.INTEGER, allowNull: false },
   nome: { type: DataTypes.STRING, allowNull: false },
   data_nascimento: { type: DataTypes.DATE, allowNull: false },
-  cnh: { type: DataTypes.STRING, allowNull: false, unique: true },
-  data_validade_cnh: { type: DataTypes.DATE, allowNull: false },
+  cnh: { type: DataTypes.STRING, allowNull: true, unique: true },
+  data_validade_cnh: { type: DataTypes.DATE, allowNull: true },
   tipo_sanguineo: { type: DataTypes.STRING, allowNull: true },
   telefone: { type: DataTypes.STRING, allowNull: false, unique: true },
   status: {

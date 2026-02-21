@@ -165,6 +165,7 @@ export class UsuarioController {
 
   static async login(req, res) {
     const isProd = process.env.NODE_ENV === "production";
+
     try {
       const { email, senha } = req.body;
 
@@ -177,6 +178,14 @@ export class UsuarioController {
       }
 
       const usuario = await Usuario.findOne({ where: { email: email } });
+
+      if (!usuario.senha) {
+        return res.status(401).json({
+          message:
+            "É seu primeiro acesso? Clique em primeiro acesso e cadastre uma senha!",
+          status: "error",
+        });
+      }
 
       if (!usuario) {
         return res
@@ -221,11 +230,10 @@ export class UsuarioController {
   static async logout(req, res) {
     const isProd = process.env.NODE_ENV === "production";
 
-    res.cookie("token", token, {
+    res.clearCookie("token", {
       httpOnly: true,
       secure: isProd,
       sameSite: isProd ? "none" : "lax",
-      maxAge: 60 * 60 * 1000,
     });
 
     return res

@@ -23,6 +23,12 @@ async function buscarAluno(alunoId, usuarioId) {
           where: { status: { [Op.ne]: 0 } },
           include: [
             {
+              model: Escola,
+              as: "escola",
+              attributes: ["id", "nome", "telefone"],
+              include: [{ model: Endereco, as: "endereco" }],
+            },
+            {
               model: Endereco,
               as: "endereco",
               attributes: [
@@ -66,12 +72,6 @@ async function buscarAluno(alunoId, usuarioId) {
                   ],
                   include: [
                     {
-                      model: Escola,
-                      as: "escola",
-                      attributes: ["id", "nome", "telefone"],
-                      include: [{ model: Endereco, as: "endereco" }],
-                    },
-                    {
                       model: Van,
                       as: "van",
                       attributes: ["id", "renavam", "placa", "numero"],
@@ -104,10 +104,10 @@ async function buscarAluno(alunoId, usuarioId) {
         email: alunoEncontrado.aluno.responsavel.responsavel.email,
       },
       escola: {
-        id: alunoEncontrado.aluno.rotasAluno[0].rota.escola.id,
-        nome: alunoEncontrado.aluno.rotasAluno[0].rota.escola.nome,
-        telefone: alunoEncontrado.aluno.rotasAluno[0].rota.escola.telefone,
-        endereco: alunoEncontrado.aluno.rotasAluno[0].rota.escola.endereco,
+        id: alunoEncontrado.aluno.escola.id,
+        nome: alunoEncontrado.aluno.escola.nome,
+        telefone: alunoEncontrado.aluno.escola.telefone,
+        endereco: alunoEncontrado.aluno.escola.endereco,
       },
       rota: {
         id: alunoEncontrado.aluno.rotasAluno[0].rota.id,
