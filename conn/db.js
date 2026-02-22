@@ -9,6 +9,12 @@ const DB_URL =
 
 const sequelize = new Sequelize(DB_URL, {
   dialect: "mysql",
+  pool: {
+    max: 10,
+    min: 0,
+    acquire: 60000,
+    idle: 10000,
+  },
 });
 
 async function conectarBanco() {

@@ -1,3 +1,4 @@
+import { Op } from "sequelize";
 import Usuario from "../../models/Usuario.js";
 
 async function consultarResponsavel(
@@ -10,7 +11,9 @@ async function consultarResponsavel(
 ) {
   try {
     const responsavel = await Usuario.findOne({
-      where: { cpf: cpf },
+      where: {
+        [Op.or]: [{ cpf: cpf }, { email: email }],
+      },
       transaction,
     });
 
@@ -25,15 +28,21 @@ async function consultarResponsavel(
         status: 2,
       };
 
-      let responsavelCriado = await Usuario.create(dadosUsuario);
+      let responsavelCriado = await Usuario.create(dadosUsuario, {
+        transaction,
+      });
 
       return responsavelCriado;
     }
 
-    return responsavel;
+    if (responsavel) {
+      if (responsavel.cpf !== cpf) {
+        throw new Error("Email já pertence a outro CPF");
+      }
+      return responsavel;
+    }
   } catch (error) {
     throw error;
-    a;
   }
 }
 

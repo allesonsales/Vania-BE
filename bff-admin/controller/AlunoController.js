@@ -101,16 +101,6 @@ export class AlunoController {
         .json({ message: "Selecione uma rota para o aluno!", status: "error" });
     }
     try {
-      const emailResponsavelEncontrado = await Usuario.findOne({
-        where: { email: emailResponsavel },
-      });
-
-      if (emailResponsavelEncontrado) {
-        return res
-          .status(409)
-          .json({ message: "E-mail já cadastrado!", status: "error" });
-      }
-
       const alunoEncontrado = await Aluno.findOne({ where: { rg: rg } });
 
       const responsavelEncontrado = await consultarResponsavel(
@@ -172,19 +162,6 @@ export class AlunoController {
           transaction,
         },
       );
-
-      const rota = await Rota.findOne({
-        where: {
-          id: rotaAluno.rota_id,
-        },
-        include: [
-          {
-            model: Escola,
-            as: "escolas",
-            include: [{ model: Endereco, as: "endereco" }],
-          },
-        ],
-      });
 
       const previsaoFim = calcularPrevisaoFim(inicioContrato, tempoContrato);
 
