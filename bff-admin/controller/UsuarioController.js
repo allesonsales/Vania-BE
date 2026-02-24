@@ -15,6 +15,7 @@ import Presenca from "../../domain/models/Presenca.js";
 import Rota from "../../domain/models/Rota.js";
 import Viagem from "../../domain/models/Viagem.js";
 import RotaAluno from "../../domain/models/relacoes/RotaAluno.js";
+import Escola from "../../domain/models/Escola.js";
 
 export class UsuarioController {
   static async cadastrarUsuario(req, res) {
@@ -159,7 +160,48 @@ export class UsuarioController {
     }
   }
 
-  static async editarUsuario(req, res) {}
+  static async editarUsuario(req, res) {
+    const usuarioId = req.usuario.id;
+    const { nome, nomeFantasia, dataNascimento, email, cpf, telefone } =
+      req.body;
+
+    try {
+      if (!nome || !nomeFantasia || !email || !cpf || !telefone) {
+        return res
+          .status(400)
+          .json({ message: "Preencha todos os campos!", status: "error" });
+      }
+
+      const usuarioEncontrado = await Usuario.findOne({
+        where: { id: usuarioId },
+      });
+
+      if (!usuarioEncontrado) {
+        return res
+          .status(409)
+          .json({ message: "Usuário não encontrado", status: "error" });
+      }
+
+      const payload = {
+        nome: nome,
+        telefone: telefone,
+        data_nascimento: dataNascimento,
+        email: email,
+        nome_fantasia: nomeFantasia,
+      };
+
+      await usuarioEncontrado.update(payload);
+
+      return res
+        .status(200)
+        .json({ message: "Perfil atualizado com sucesso!", status: "success" });
+    } catch (err) {
+      console.error(err);
+      return res
+        .status(500)
+        .json({ message: "Erro ao atualizar usuário!", status: "error" });
+    }
+  }
 
   static async buscarUsuario(req, res) {}
 
@@ -377,7 +419,46 @@ export class UsuarioController {
     const usuarioId = req.usuario.id;
 
     try {
-      const usuarioTabela = await Usuario.findOne({ where: { id: usuarioId } });
+      const usuarioTabela = await Usuario.findOne({
+        where: { id: usuarioId },
+        include: [{ model: Escola }, { model: Rota }],
+      });
+
+      const totalEscolas = await Escola.count({
+        where: { usuario_id: usuarioId },
+      });
+
+      const totalRotas = await Rota.count({ where: { usuario_id: usuarioId } });
+
+      const totalMotorista = await Motorista.count({
+        where: { usuario_id: usuarioId },
+      });
+      const totalAlunos = await AlunoUsuario.count({
+        where: { usuario_id: usuarioId },
+      });
+
+      const totalVans = await VanUsuario.count({
+        where: { usuario_id: usuarioId },
+      });
+
+      const totalViagens = await Viagem.count({
+        where: { usuario_id: usuarioId },
+      });
+
+      const usuarioFlat = {
+        nome: usuarioTabela.nome,
+        cpf: usuarioTabela.cpf,
+        data_nascimento: usuarioTabela.data_nascimento,
+        email: usuarioTabela.email,
+        nome_fantasia: usuarioTabela.nome_fantasia,
+        telefone: usuarioTabela.telefone,
+        total_rotas: totalRotas,
+        total_escolas: totalEscolas,
+        total_alunos: totalAlunos,
+        total_vans: totalVans,
+        total_viagens: totalViagens,
+        total_motorista: totalMotorista,
+      };
 
       if (!usuarioTabela) {
         return res
@@ -385,7 +466,7 @@ export class UsuarioController {
           .json({ message: "Nenhum usuário encontrado!", status: "error" });
       }
 
-      return res.status(200).json(usuarioTabela);
+      return res.status(200).json(usuarioFlat);
     } catch (error) {
       console.error(error);
       return res

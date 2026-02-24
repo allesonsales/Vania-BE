@@ -16,6 +16,7 @@ UsuariosRoute.put(
 UsuariosRoute.post("/login", UsuarioController.login);
 UsuariosRoute.post("/logout", UsuarioController.logout);
 UsuariosRoute.post("/", UsuarioController.cadastrarUsuario);
+UsuariosRoute.put("/", autenticarUsuario, UsuarioController.editarUsuario);
 UsuariosRoute.delete("/", autenticarUsuario, UsuarioController.excluirUsuario);
 UsuariosRoute.get("/validar", autenticarUsuario, (req, res) => {
   return res.status(200).json({
