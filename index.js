@@ -27,8 +27,8 @@ const __dirname = path.dirname(__filename);
 app.use(
   cors({
     origin: [
-      "http://localhost:4200",
-      "http://localhost:4201",
+      // "http://localhost:4200",
+      // "http://localhost:4201",
       "https://van-ia-fe-1xrf.vercel.app",
       "https://vaniafe.vercel.app",
     ],
