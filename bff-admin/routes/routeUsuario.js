@@ -5,14 +5,12 @@ import autenticarUsuario from "../../domain/utils/token/autenticarUsuario.js";
 const UsuariosRoute = express.Router();
 
 UsuariosRoute.get("/me", autenticarUsuario, UsuarioController.pegarUsuario);
-UsuariosRoute.post(
-  "/verificar-email-primeiro-acesso",
-  UsuarioController.verificarEmailPrimeiroAcesso,
-);
+UsuariosRoute.post("/verificar-email", UsuarioController.verificarEmail);
 UsuariosRoute.put(
   "/cadastrar-senha-primeiro-acesso",
   UsuarioController.cadastrarSenhaPrimeiroAcesso,
 );
+UsuariosRoute.put("/recuperar-senha", UsuarioController.recuperarSenha);
 UsuariosRoute.post("/login", UsuarioController.login);
 UsuariosRoute.post("/logout", UsuarioController.logout);
 UsuariosRoute.post("/", UsuarioController.cadastrarUsuario);

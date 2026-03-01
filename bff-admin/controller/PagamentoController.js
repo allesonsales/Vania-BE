@@ -7,7 +7,6 @@ import Aluno from "../../domain/models/Aluno.js";
 import Escola from "../../domain/models/Escola.js";
 import RotaAluno from "../../domain/models/relacoes/RotaAluno.js";
 import Rota from "../../domain/models/Rota.js";
-import sequelize from "../../conn/db.js";
 
 export class PagamentoController {
   static async buscarTodosPagamentos(req, res) {

@@ -16,6 +16,7 @@ import Rota from "../../domain/models/Rota.js";
 import Viagem from "../../domain/models/Viagem.js";
 import RotaAluno from "../../domain/models/relacoes/RotaAluno.js";
 import Escola from "../../domain/models/Escola.js";
+import Pagamento from "../../domain/models/Pagamento.js";
 
 export class UsuarioController {
   static async cadastrarUsuario(req, res) {
@@ -123,7 +124,7 @@ export class UsuarioController {
     } catch (error) {}
   }
 
-  static async verificarEmailPrimeiroAcesso(req, res) {
+  static async verificarEmail(req, res) {
     const { email } = req.body;
 
     if (!email) {
@@ -140,18 +141,22 @@ export class UsuarioController {
       if (!usuarioEncontrado) {
         return res
           .status(404)
-          .json({ message: "E-mail não cadastrado!", status: "error" });
+          .json({ message: "Usuário não encontrado!", status: "error" });
       }
 
       if (usuarioEncontrado.senha) {
-        return res
-          .status(200)
-          .json({ message: "Senha já cadastrada!", status: "error" });
+        return res.status(200).json({
+          message: "Senha já cadastrada!",
+          status: "error",
+          senhaCadastrada: true,
+        });
       }
 
-      return res
-        .status(200)
-        .json({ message: "Digite uma senha!", status: "success" });
+      return res.status(200).json({
+        message: "Digite uma senha!",
+        status: "success",
+        senhaCadastrada: false,
+      });
     } catch (error) {
       console.error(error);
       return res
@@ -285,9 +290,43 @@ export class UsuarioController {
 
   static async alterarSenha(req, res) {}
 
-  static async recuperarSenha(req, res) {}
+  static async recuperarSenha(req, res) {
+    const { email, senha, confirmarSenha } = req.body;
 
-  static async resetarSenha(req, res) {}
+    try {
+      if (!senha || !confirmarSenha) {
+        return res.status(400).json({
+          message: "Digite a senha e confirme a senha!",
+          status: "error",
+        });
+      }
+
+      if (senha != confirmarSenha) {
+        return res
+          .status(400)
+          .json({ message: "As senhas não coincidem!", status: "errror" });
+      }
+
+      const usuarioEncontrado = await Usuario.findOne({
+        where: { email: email },
+      });
+
+      const salt = await bcrypt.genSalt(12);
+
+      const senhaHash = await bcrypt.hash(senha, salt);
+
+      await usuarioEncontrado.update({ senha: senhaHash });
+
+      return res
+        .status(200)
+        .json({ message: "Senha atualizada com sucesso!", status: "success" });
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ message: "Erro ao atualizar senha!", status: "error" });
+    }
+  }
 
   static async excluirUsuario(req, res) {
     const usuarioId = req.usuario.id;
@@ -445,6 +484,19 @@ export class UsuarioController {
         where: { usuario_id: usuarioId },
       });
 
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+
+      const totalVencidos = await Pagamento.count({
+        distinct: "true",
+        col: "responsavel_id",
+        where: {
+          usuario_id: usuarioId,
+          pago_em: null,
+          data_vencimento: { [Op.lt]: hoje },
+        },
+      });
+
       const usuarioFlat = {
         nome: usuarioTabela.nome,
         cpf: usuarioTabela.cpf,
@@ -455,6 +507,7 @@ export class UsuarioController {
         total_rotas: totalRotas,
         total_escolas: totalEscolas,
         total_alunos: totalAlunos,
+        total_vencidos: totalVencidos,
         total_vans: totalVans,
         total_viagens: totalViagens,
         total_motorista: totalMotorista,

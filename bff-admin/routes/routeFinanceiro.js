@@ -11,6 +11,7 @@ FinanceiroRoute.get(
   autenticarUsuario,
   PagamentoController.buscarTodosPagamentos,
 );
+
 FinanceiroRoute.get(
   "/:id",
   autenticarUsuario,
