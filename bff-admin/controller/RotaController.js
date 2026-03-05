@@ -268,12 +268,10 @@ export class RotaController {
   }
 
   static async editarRota(req, res) {
+    console.log("Iniciou editar rota");
     const { rotaId } = req.params;
-    const usuarioId = req.usuario.id;
 
     const {
-      nome,
-      escolaId,
       vanId,
       motoristaId,
       horaInicioIda,
@@ -367,18 +365,8 @@ export class RotaController {
       });
     }
 
-    let escolaEncontrada;
-
-    try {
-      escolaEncontrada = await buscarEscola(escolaId);
-    } catch (error) {
-      console.error(error);
-    }
-
     const dadosRota = {
-      nome: `${enderecoBuscado.bairro} - ${escolaEncontrada.nome}`,
       van_id: vanId,
-      escola_id: escolaId,
       motorista_id: motoristaId,
       hora_inicio_ida: horaInicioIda,
       hora_fim_ida: horaFimIda,
@@ -407,7 +395,9 @@ export class RotaController {
       const { rotaId } = req.params;
       const usuarioId = req.usuario.id;
 
-      const rota = await Rota.findOne({ where: { id: rotaId } });
+      const rota = await Rota.findOne({
+        where: { id: rotaId, usuario_id: usuarioId },
+      });
 
       if (!rota) {
         return res
@@ -421,6 +411,7 @@ export class RotaController {
 
       if (!rotaComViagem) {
         await rota.destroy();
+        await RotaAluno.destroy({ where: { rota_id: rotaId } });
         return res
           .status(200)
           .json({ message: "Rota excluída com sucesso!", status: "success" });

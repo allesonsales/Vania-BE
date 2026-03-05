@@ -500,6 +500,7 @@ export class UsuarioController {
       const usuarioFlat = {
         nome: usuarioTabela.nome,
         cpf: usuarioTabela.cpf,
+        tipo: usuarioTabela.tipo,
         data_nascimento: usuarioTabela.data_nascimento,
         email: usuarioTabela.email,
         nome_fantasia: usuarioTabela.nome_fantasia,

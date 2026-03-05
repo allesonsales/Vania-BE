@@ -10,11 +10,12 @@ function criarTokenUsuario(usuario) {
     {
       id: usuario.id,
       nome: usuario.nome,
+      tipo: usuario.tipo,
     },
     CHAVE_TOKEN,
     {
       expiresIn: "1h",
-    }
+    },
   );
 
   return token;

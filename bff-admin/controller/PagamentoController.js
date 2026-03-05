@@ -1,4 +1,4 @@
-import { Op, Sequelize } from "sequelize";
+import { Op, Sequelize, where } from "sequelize";
 import Pagamento from "../../domain/models/Pagamento.js";
 import consultarConfiguracao from "../../domain/utils/configuracao/consultarConfiguracao.js";
 import Usuario from "../../domain/models/Usuario.js";
@@ -258,6 +258,39 @@ export class PagamentoController {
       });
     } catch (err) {
       console.error(err);
+    }
+  }
+
+  static async confirmarPagamentos(req, res) {
+    console.log("Iniciou confirmar pagamentos");
+    try {
+      const { pagamentosSelecionados } = req.body;
+
+      if (!pagamentosSelecionados.length) {
+        return res
+          .status(400)
+          .json({ message: "Nenhum pagamento selecionado", status: "errror" });
+      }
+
+      const data = new Date().toLocaleDateString("en-CA");
+
+      await Pagamento.update(
+        { status: 2, pago_em: data },
+        {
+          where: { id: pagamentosSelecionados },
+        },
+      );
+
+      return res.status(200).json({
+        message: "Pagamentos atualizados com sucesso!",
+        status: "success",
+      });
+    } catch (error) {
+      console.error(error);
+
+      return res
+        .status(500)
+        .json({ message: "Erro ao atualizar pagamentos", status: "error" });
     }
   }
 
