@@ -13,9 +13,12 @@ export class viagemController {
   static async verificarViagemAtiva(req, res) {
     try {
       const usuarioId = req.usuario.id;
+      const administrador = await Motorista.findOne({
+        where: { usuario_motorista_id: usuarioId },
+      });
 
       const viagem = await Viagem.findOne({
-        where: { usuario_id: usuarioId, status: 1 },
+        where: { usuario_id: administrador.usuario_id, status: 1 },
       });
 
       if (viagem) {
