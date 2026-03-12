@@ -39,7 +39,9 @@ export class viagemController {
           .status(404)
           .json({ message: "Motorista não encontrado!", status: "error" });
       }
-      const agora = new Date();
+      const agora = new Date(
+        new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }),
+      );
       const umaHoraAntes = new Date(agora.getTime() - 60 * 60 * 1000);
       const umaHoraDepois = new Date(agora.getTime() + 60 * 60 * 1000);
       const horaAgora = agora.toTimeString().slice(0, 8);
@@ -48,6 +50,9 @@ export class viagemController {
 
       const inicioDoDia = new Date();
       inicioDoDia.setHours(0, 0, 0, 0);
+      console.log("agora", new Date());
+
+      console.log("Agora debg", agora);
 
       console.log("horas", horaAgora, horaDepois);
 
