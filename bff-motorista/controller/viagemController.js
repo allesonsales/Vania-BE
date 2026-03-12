@@ -18,6 +18,12 @@ export class viagemController {
         where: { usuario_id: usuarioId, status: 1 },
       });
 
+      if (viagem) {
+        console.log("Viagem ativa", viagem);
+      } else {
+        console.log("Não tem viagem ativa");
+      }
+
       return res.status(200).json(viagem);
     } catch (error) {
       console.error(error);
