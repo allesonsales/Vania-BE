@@ -41,12 +41,15 @@ export class viagemController {
       }
       const agora = new Date();
       const umaHoraAntes = new Date(agora.getTime() - 60 * 60 * 1000);
-      const umaHoraDepois = new Date(agora.getTime() + 30 * 60 * 1000);
+      const umaHoraDepois = new Date(agora.getTime() + 60 * 60 * 1000);
+      const horaAgora = agora.toTimeString().slice(0, 8);
       const horaAntes = umaHoraAntes.toTimeString().slice(0, 8);
       const horaDepois = umaHoraDepois.toTimeString().slice(0, 8);
 
       const inicioDoDia = new Date();
       inicioDoDia.setHours(0, 0, 0, 0);
+
+      console.log("horas", horaAgora, horaDepois);
 
       const fimDoDia = new Date();
       fimDoDia.setHours(23, 59, 59, 999);
@@ -56,8 +59,8 @@ export class viagemController {
           motorista_id: motorista.id,
 
           [Op.or]: [
-            { hora_inicio_ida: { [Op.between]: [horaAntes, horaDepois] } },
-            { hora_inicio_volta: { [Op.between]: [horaAntes, horaDepois] } },
+            { hora_inicio_ida: { [Op.between]: [horaAgora, horaDepois] } },
+            { hora_inicio_volta: { [Op.between]: [horaAgora, horaDepois] } },
           ],
 
           status: { [Op.ne]: 2 },
@@ -87,8 +90,6 @@ export class viagemController {
   static async selecionarViagem(req, res) {
     try {
       const rotaId = req.params.id;
-
-      console.log("rota id", rotaId);
 
       const alunos = await RotaAluno.findAll({
         where: { rota_id: rotaId },
