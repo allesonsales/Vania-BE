@@ -120,6 +120,15 @@ export class viagemController {
         ],
       });
 
+      if (!alunos.length) {
+        return res
+          .status(400)
+          .json({
+            message: "Essa rota não possui alunos cadastrados!",
+            status: "error",
+          });
+      }
+
       const escolas = alunos.reduce((acc, { aluno }) => {
         const escolaId = aluno.escola.id;
         const escolaExistente = acc.find((e) => e.id === escolaId);
