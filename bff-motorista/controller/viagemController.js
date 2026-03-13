@@ -8,9 +8,11 @@ import RotaAluno from "../../domain/models/relacoes/RotaAluno.js";
 import Aluno from "../../domain/models/Aluno.js";
 import Presenca from "../../domain/models/Presenca.js";
 import RotaEscola from "../../domain/models/relacoes/RotaEscola.js";
+import { mapearViagem } from "../../domain/utils/viagens/mapearViagem.js";
 
 export class viagemController {
   static async verificarViagemAtiva(req, res) {
+    console.log("verificando viagem ativa");
     try {
       const usuarioId = req.usuario.id;
       const administrador = await Motorista.findOne({
@@ -19,7 +21,29 @@ export class viagemController {
 
       const viagem = await Viagem.findOne({
         where: { usuario_id: administrador.usuario_id, status: 1 },
+        include: [
+          {
+            model: Rota,
+            as: "rota",
+            include: [
+              {
+                model: RotaAluno,
+                include: [
+                  {
+                    model: Aluno,
+                    as: "aluno",
+                    include: [{ model: Escola, as: "escola" }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       });
+
+      const viagemMapeada = mapearViagem(viagem);
+
+      console.log("mapeada", viagemMapeada);
 
       if (viagem) {
         console.log("Viagem ativa", viagem);
@@ -27,7 +51,7 @@ export class viagemController {
         console.log("Não tem viagem ativa");
       }
 
-      return res.status(200).json(viagem);
+      return res.status(200).json(viagemMapeada);
     } catch (error) {
       console.error(error);
       return res
@@ -71,25 +95,38 @@ export class viagemController {
       const rotas = await Rota.findAll({
         where: {
           motorista_id: motorista.id,
-
-          [Op.or]: [
-            { hora_inicio_ida: { [Op.between]: [horaAgora, horaDepois] } },
-            { hora_inicio_volta: { [Op.between]: [horaAgora, horaDepois] } },
-          ],
-
           status: { [Op.ne]: 2 },
 
-          id: {
-            [Op.notIn]: Sequelize.literal(`(
-            SELECT rota_id 
-            FROM viagems 
-            WHERE createdAt BETWEEN '${inicioDoDia.toISOString()}' 
-            AND '${fimDoDia.toISOString()}'
-          )`),
-          },
+          [Op.or]: [
+            Sequelize.literal(`
+    hora_inicio_ida BETWEEN '${horaAgora}' AND '${horaDepois}'
+    AND NOT EXISTS (
+      SELECT 1
+      FROM viagems v
+      WHERE v.rota_id = rota.id
+      AND v.tipo = 1
+      AND v.createdAt BETWEEN '${inicioDoDia.toISOString()}' 
+      AND '${fimDoDia.toISOString()}'
+    )
+  `),
+
+            Sequelize.literal(`
+    hora_inicio_volta BETWEEN '${horaAgora}' AND '${horaDepois}'
+    AND NOT EXISTS (
+      SELECT 1
+      FROM viagems v
+      WHERE v.rota_id = rota.id
+      AND v.tipo = 2
+      AND v.createdAt BETWEEN '${inicioDoDia.toISOString()}' 
+      AND '${fimDoDia.toISOString()}'
+    )
+  `),
+          ],
         },
         include: [{ model: Endereco, as: "endereco" }],
       });
+
+      console.log("RORTA", rotas);
 
       return res.status(200).json(rotas);
     } catch (error) {
@@ -121,12 +158,10 @@ export class viagemController {
       });
 
       if (!alunos.length) {
-        return res
-          .status(400)
-          .json({
-            message: "Essa rota não possui alunos cadastrados!",
-            status: "error",
-          });
+        return res.status(400).json({
+          message: "Essa rota não possui alunos cadastrados!",
+          status: "error",
+        });
       }
 
       const escolas = alunos.reduce((acc, { aluno }) => {
@@ -146,31 +181,7 @@ export class viagemController {
         return acc;
       }, []);
 
-      // const viagemFlat = {
-      //   rota_id: alunos[0].rota.id,
-      //   nome_rota: alunos[0].rota.nome,
-      //   hora_inicio_ida: alunos[0].rota.hora_inicio_ida,
-      //   hora_fim_ida: alunos[0].rota.hora_fim_ida,
-      //   hora_fim_volta: alunos[0].rota.hora_fim_volta,
-      //   hora_inicio_volta: rota.hora_inicio_volta,
-      //   escolas: alunos.map((aluno) => ({
-      //     id: aluno.escola.id,
-      //   })),
-      // };
-
       const rotaInfo = alunos[0].rota;
-
-      // const viagemFlat = {
-      //   rota_id: rotaInfo.id,
-      //   nome_rota: rotaInfo.nome,
-      //   hora_inicio_ida: rotaInfo.hora_inicio_ida,
-      //   hora_fim_ida: rotaInfo.hora_fim_ida,
-      //   hora_inicio_volta: rotaInfo.hora_inicio_volta,
-      //   hora_fim_volta: rotaInfo.hora_fim_volta,
-      //   escolas: alunos.map((aluno) => ({
-      //     id: aluno.aluno.escola.id,
-      //   })),
-      // };
 
       const viagemFlat = {
         rota_id: rotaInfo.id,
@@ -195,6 +206,7 @@ export class viagemController {
       const motoristaEncontrado = await Motorista.findOne({
         where: { usuario_motorista_id: usuarioId },
       });
+
       const rotaId = req.params.id;
       const horaAtual = new Date().toTimeString().slice(0, 8);
 
