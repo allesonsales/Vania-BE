@@ -226,18 +226,18 @@ export class UsuarioController {
 
       const usuario = await Usuario.findOne({ where: { email: email } });
 
+      if (!usuario) {
+        return res
+          .status(401)
+          .json({ message: "E-mail ou senha inválidos", status: "error" });
+      }
+
       if (!usuario.senha) {
         return res.status(401).json({
           message:
             "É seu primeiro acesso? Clique em primeiro acesso e cadastre uma senha!",
           status: "error",
         });
-      }
-
-      if (!usuario) {
-        return res
-          .status(401)
-          .json({ message: "E-mail ou senha inválidos", status: "error" });
       }
 
       if (usuario.status == 0) {
