@@ -97,30 +97,34 @@ export class viagemController {
           motorista_id: motorista.id,
           status: { [Op.ne]: 2 },
 
-          [Op.or]: [
+          [Op.and]: [
             Sequelize.literal(`
-    hora_inicio_ida BETWEEN '${horaAgora}' AND '${horaDepois}'
-    AND NOT EXISTS (
-      SELECT 1
-      FROM viagems v
-      WHERE v.rota_id = rota.id
-      AND v.tipo = 1
-      AND v.createdAt BETWEEN '${inicioDoDia.toISOString()}' 
-      AND '${fimDoDia.toISOString()}'
-    )
-  `),
-
-            Sequelize.literal(`
-    hora_inicio_volta BETWEEN '${horaAgora}' AND '${horaDepois}'
-    AND NOT EXISTS (
-      SELECT 1
-      FROM viagems v
-      WHERE v.rota_id = rota.id
-      AND v.tipo = 2
-      AND v.createdAt BETWEEN '${inicioDoDia.toISOString()}' 
-      AND '${fimDoDia.toISOString()}'
-    )
-  `),
+        (
+          (
+            hora_inicio_ida BETWEEN '${horaAgora}' AND '${horaDepois}'
+            AND NOT EXISTS (
+              SELECT 1
+              FROM viagems v
+              WHERE v.rota_id = rota.id
+              AND v.tipo = 1
+              AND v.createdAt BETWEEN '${inicioDoDia.toISOString()}' 
+              AND '${fimDoDia.toISOString()}'
+            )
+          )
+          OR 
+          (
+            hora_inicio_volta BETWEEN '${horaAgora}' AND '${horaDepois}'
+            AND NOT EXISTS (
+              SELECT 1
+              FROM viagems v
+              WHERE v.rota_id = rota.id
+              AND v.tipo = 2
+              AND v.createdAt BETWEEN '${inicioDoDia.toISOString()}' 
+              AND '${fimDoDia.toISOString()}'
+            )
+          )
+        )
+      `),
           ],
         },
         include: [{ model: Endereco, as: "endereco" }],
