@@ -101,7 +101,7 @@ export class viagemController {
             Sequelize.literal(`
         (
           (
-            hora_inicio_ida BETWEEN '${horaAgora}' AND '${horaDepois}'
+            hora_inicio_ida BETWEEN '${horaAntes}' AND '${horaDepois}'
             AND NOT EXISTS (
               SELECT 1
               FROM viagems v
@@ -113,7 +113,7 @@ export class viagemController {
           )
           OR 
           (
-            hora_inicio_volta BETWEEN '${horaAgora}' AND '${horaDepois}'
+            hora_fim_volta BETWEEN '${horaAntes}' AND '${horaDepois}'
             AND NOT EXISTS (
               SELECT 1
               FROM viagems v
