@@ -91,6 +91,7 @@ export class AdminViagemController {
         data: viagem.createdAt,
         tipo: viagem.tipo,
         rota_id: viagem.rota.id,
+        rota: viagem.rota,
       }));
 
       return res.status(200).json(viagensFlat);
