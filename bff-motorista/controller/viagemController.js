@@ -113,7 +113,7 @@ export class viagemController {
           )
           OR 
           (
-            hora_fim_volta BETWEEN '${horaAntes}' AND '${horaDepois}'
+            hora_fim_volta BETWEEN '${horaAntes}' AND '${horaDepois}' OR
             AND NOT EXISTS (
               SELECT 1
               FROM viagems v

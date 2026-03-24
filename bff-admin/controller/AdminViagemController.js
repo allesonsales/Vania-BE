@@ -84,7 +84,16 @@ export class AdminViagemController {
       //   // },
       // }));
 
-      return res.status(200).json(viagens);
+      const viagensFlat = viagens.map((viagem) => ({
+        id: viagem.id,
+        hora_fim: viagem.hora_fim,
+        hora_inicio: viagem.hora_inicio,
+        data: viagem.createdAt,
+        tipo: viagem.tipo,
+        rota_id: viagem.rota.id,
+      }));
+
+      return res.status(200).json(viagensFlat);
     } catch (error) {
       console.error(error);
       return res
